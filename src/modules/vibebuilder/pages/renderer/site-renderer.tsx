@@ -119,7 +119,7 @@ export const SiteRendererPage = () => {
         ) : (
           [...currentPage.Components]
             .sort((a, b) => a.Order - b.Order)
-            .map((comp) => renderComponent(comp, siteId, siteSlug))
+            .map((comp) => renderComponent(comp, false, undefined, undefined, undefined, undefined, undefined, siteId, siteSlug))
         )}
       </div>
     </div>
