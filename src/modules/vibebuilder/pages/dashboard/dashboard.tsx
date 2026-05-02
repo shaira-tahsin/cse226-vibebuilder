@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus,
@@ -10,15 +10,13 @@ import {
   List,
   Search,
   Layers,
-  FileText,
-  Settings,
   LogOut,
   Zap,
   MoreHorizontal,
   Eye,
   Edit3,
-  TrendingUp,
   ChevronDown,
+  MessageSquare,
 } from 'lucide-react';
 import { useSites, useCreateSite, useDeleteSite } from '../../hooks/use-sites';
 import { VibeSite } from '../../types/site.types';
@@ -44,10 +42,21 @@ import { Input } from '@/components/ui-kit/input';
 import { Label } from '@/components/ui-kit/label';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/state/store/auth';
+import { graphqlClient } from '@/lib/graphql-client';
 
 type LayoutMode = 'grid' | 'list';
 type VisibilityFilter = 'all' | 'published' | 'draft';
-type NavSection = 'sites' | 'analytics' | 'media' | 'settings';
+type NavSection = 'sites' | 'responses';
+type VibeTheme = 'classic' | 'spring' | 'ash' | 'autumn' | 'garden' | 'midnight';
+
+const THEMES: { id: VibeTheme; label: string; preview: string; description: string }[] = [
+  { id: 'classic', label: 'Classic', preview: 'bg-blue-600', description: 'Clean blue' },
+  { id: 'spring', label: 'Spring', preview: 'bg-pink-400', description: 'Soft pink' },
+  { id: 'ash', label: 'Ash', preview: 'bg-slate-500', description: 'Cool grey' },
+  { id: 'autumn', label: 'Autumn', preview: 'bg-amber-800', description: 'Warm maroon' },
+  { id: 'garden', label: 'Garden', preview: 'bg-emerald-600', description: 'Fresh green' },
+  { id: 'midnight', label: 'Midnight', preview: 'bg-slate-900', description: 'Dark mode' },
+];
 
 export const VibeDashboardPage = () => {
   const navigate = useNavigate();
@@ -72,6 +81,8 @@ export const VibeDashboardPage = () => {
   const [search, setSearch] = useState('');
   const [activeNav, setActiveNav] = useState<NavSection>('sites');
   const [showDropdown, setShowDropdown] = useState<string | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [theme, setTheme] = useState<VibeTheme>('classic');
 
   const allSites: VibeSite[] = data?.getVibeSites?.items ?? [];
 
@@ -97,11 +108,12 @@ export const VibeDashboardPage = () => {
   const handleCreate = async () => {
     if (!name.trim() || !slug.trim()) return;
     try {
-      await createSite.mutateAsync({ name: name.trim(), slug: slug.trim() });
+      await createSite.mutateAsync({ name: name.trim(), slug: slug.trim(), theme });
       toast.success('Site created!');
       setCreateOpen(false);
       setName('');
       setSlug('');
+      setTheme('classic');
     } catch {
       toast.error('Failed to create site');
     }
@@ -123,9 +135,7 @@ export const VibeDashboardPage = () => {
 
   const navItems = [
     { id: 'sites' as NavSection, label: 'My Projects', icon: Layers },
-    { id: 'analytics' as NavSection, label: 'Analytics', icon: TrendingUp },
-    { id: 'media' as NavSection, label: 'Media Files', icon: FileText },
-    { id: 'settings' as NavSection, label: 'Settings', icon: Settings },
+    { id: 'responses' as NavSection, label: 'Responses', icon: MessageSquare },
   ];
 
   return (
@@ -190,29 +200,6 @@ export const VibeDashboardPage = () => {
           </div>
         </div>
 
-        {/* User footer */}
-        <div className="border-t border-slate-100 px-4 py-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
-            {user?.profileImageUrl ? (
-              <img src={user.profileImageUrl} alt={userDisplay} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                {userInitial}
-              </div>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-slate-700 truncate">{userDisplay}</p>
-            <p className="text-[10px] text-slate-400 truncate">{user?.email ?? ''}</p>
-          </div>
-          <button
-            onClick={() => logout?.()}
-            className="text-slate-400 hover:text-red-500 transition-colors"
-            title="Logout"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-          </button>
-        </div>
       </aside>
 
       {/* ── Main Content ── */}
@@ -222,40 +209,55 @@ export const VibeDashboardPage = () => {
           <div>
             <h1 className="text-xl font-bold text-slate-800 tracking-tight">
               {activeNav === 'sites' && 'My Projects'}
-              {activeNav === 'analytics' && 'Analytics'}
-              {activeNav === 'media' && 'Media Files'}
-              {activeNav === 'settings' && 'Settings'}
+              {activeNav === 'responses' && 'Responses'}
             </h1>
             <p className="text-sm text-slate-400 mt-0.5">
               {activeNav === 'sites' && 'Build and publish websites visually'}
-              {activeNav === 'analytics' && 'Track your site performance'}
-              {activeNav === 'media' && 'Manage your uploaded images and files'}
-              {activeNav === 'settings' && 'Manage your account preferences'}
+              {activeNav === 'responses' && 'Form submissions from your sites'}
             </p>
+          </div>
+          <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setProfileOpen(false); }}>
+            <button
+              onClick={() => setProfileOpen((v) => !v)}
+              className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-slate-100 transition-colors focus:outline-none"
+            >
+              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
+                {user?.profileImageUrl ? (
+                  <img src={user.profileImageUrl} alt={userDisplay} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                    {userInitial}
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 text-left">
+                <p className="text-xs font-semibold text-slate-700 truncate">{userDisplay}</p>
+                <p className="text-[10px] text-slate-400 truncate">{user?.email ?? ''}</p>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            </button>
+
+            {profileOpen && (
+              <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-1 overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-100">
+                  <p className="text-xs font-semibold text-slate-700 truncate">{userDisplay}</p>
+                  <p className="text-[10px] text-slate-400 truncate">{user?.email ?? ''}</p>
+                </div>
+                <button
+                  onClick={() => { logout?.(); setProfileOpen(false); }}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Log out
+                </button>
+              </div>
+            )}
           </div>
         </header>
 
-        {/* Non-sites sections render placeholder */}
-        {activeNav !== 'sites' && (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
-                {activeNav === 'analytics' && <TrendingUp className="w-7 h-7 text-blue-400" />}
-                {activeNav === 'media' && <FileText className="w-7 h-7 text-blue-400" />}
-                {activeNav === 'settings' && <Settings className="w-7 h-7 text-blue-400" />}
-              </div>
-              <p className="text-slate-700 font-semibold text-base">
-                {activeNav === 'analytics' && 'Analytics coming soon'}
-                {activeNav === 'media' && 'Use the File Manager'}
-                {activeNav === 'settings' && 'Settings coming soon'}
-              </p>
-              <p className="text-sm text-slate-400 mt-1">
-                {activeNav === 'analytics' && 'Site visit stats will appear here once your sites are published'}
-                {activeNav === 'media' && 'Access your uploaded files via the boilerplate File Manager'}
-                {activeNav === 'settings' && 'Account and workspace settings will be available here'}
-              </p>
-            </div>
-          </div>
+        {/* Responses section */}
+        {activeNav === 'responses' && (
+          <ResponsesSection allSites={allSites} />
         )}
 
         {/* Sites section */}
@@ -378,6 +380,29 @@ export const VibeDashboardPage = () => {
                 />
               </div>
               <p className="text-xs text-slate-400">Used in the public URL of your site</p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-slate-700">Theme</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {THEMES.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTheme(t.id)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-left transition-all ${
+                      theme === t.id
+                        ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-400'
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className={`w-4 h-4 rounded-full shrink-0 ${t.preview}`} />
+                    <div>
+                      <p className="text-xs font-semibold text-slate-700">{t.label}</p>
+                      <p className="text-[10px] text-slate-400">{t.description}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -552,6 +577,7 @@ const SiteCard = ({
           }`}>
             {site.IsPublished ? 'Live' : 'Draft'}
           </span>
+
           <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) onToggleDropdown(); }}>
             <button
               onClick={onToggleDropdown}
@@ -649,6 +675,113 @@ const SiteRow = ({
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
+    </div>
+  );
+};
+
+/* ── Responses Section ── */
+const GET_SUBMISSIONS_QUERY = `
+  query GetVibeFormSubmissions($input: QueryInput) {
+    getVibeFormSubmissions(input: $input) {
+      items {
+        ItemId
+        SiteId
+        SiteSlug
+        Name
+        Email
+        Message
+        SubmittedAt
+      }
+      totalCount
+    }
+  }
+`;
+
+const ResponsesSection = ({ allSites }: { allSites: VibeSite[] }) => {
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedSite, setSelectedSite] = useState<string>('all');
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await graphqlClient.query<any>({
+          query: GET_SUBMISSIONS_QUERY,
+          variables: { input: { pageNo: 1, pageSize: 100 } },
+        });
+        setSubmissions(res?.getVibeFormSubmissions?.items ?? []);
+      } catch {
+        setSubmissions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const filtered = selectedSite === 'all'
+    ? submissions
+    : submissions.filter((s) => s.SiteId === selectedSite);
+
+  return (
+    <div className="flex-1 overflow-y-auto px-8 py-6">
+      {/* Site filter */}
+      <div className="mb-4 flex items-center gap-3">
+        <div className="relative">
+          <select
+            value={selectedSite}
+            onChange={(e) => setSelectedSite(e.target.value)}
+            className="appearance-none pl-3 pr-8 py-2 text-sm bg-white border border-slate-200 rounded-lg text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 cursor-pointer transition"
+          >
+            <option value="all">All Sites</option>
+            {allSites.map((s) => (
+              <option key={s.ItemId} value={s.ItemId}>{s.Name}</option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+        </div>
+        <span className="text-sm text-slate-400">{filtered.length} response{filtered.length !== 1 ? 's' : ''}</span>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-48">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-48 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-3">
+            <MessageSquare className="w-6 h-6 text-blue-400" />
+          </div>
+          <p className="text-slate-700 font-semibold">No responses yet</p>
+          <p className="text-sm text-slate-400 mt-1">Responses from your contact forms will appear here</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {filtered.map((sub) => (
+            <div key={sub.ItemId} className="bg-white border border-slate-200 rounded-xl px-5 py-4 hover:shadow-sm transition">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-sm font-semibold text-slate-800">{sub.Name}</p>
+                    <span className="text-xs text-slate-400">·</span>
+                    <p className="text-xs text-slate-500">{sub.Email}</p>
+                    {sub.SiteSlug && (
+                      <>
+                        <span className="text-xs text-slate-400">·</span>
+                        <span className="text-xs text-blue-500 font-medium">/{sub.SiteSlug}</span>
+                      </>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-600 leading-relaxed">{sub.Message}</p>
+                </div>
+                <p className="text-[10px] text-slate-400 shrink-0 mt-0.5">
+                  {sub.SubmittedAt ? new Date(sub.SubmittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

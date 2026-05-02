@@ -138,7 +138,7 @@ export const SigninEmail = () => {
           <div className="flex justify-end">
             <Link
               to="/forgot-password"
-              className="text-sm text-primary hover:text-primary-600 hover:underline"
+              className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
             >
               {t('FORGOT_PASSWORD')}
             </Link>
@@ -152,7 +152,7 @@ export const SigninEmail = () => {
 
           <Button
             type="submit"
-            className="w-full"
+            className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white"
             disabled={isPending || (isCaptchaRequired && !captchaCode)}
           >
             {t('LOG_IN')}

@@ -144,24 +144,14 @@ export const AuthLayout = () => {
   if (isLoading) return null;
 
   return (
-    <div className="flex w-full flex-col h-screen">
+    <div className="flex w-full flex-col min-h-screen bg-[#f0f4f8]">
       <ExtensionBanner />
-      <div className="flex w-full min-h-screen relative">
-        <div className="hidden md:block w-[36%] relative bg-primary-50">
-          <img
-            src={getBackgroundImage()}
-            alt="bg auth"
-            className="w-full h-full object-cover"
-            key={theme ?? 'default'}
-          />
+      <div className="flex flex-1 items-center justify-center relative px-4 py-10">
+        <div className="absolute top-4 right-6 flex flex-row gap-2">
+          <ThemeSwitcher />
+          <LanguageSelector />
         </div>
-        <div className="flex items-center justify-center w-full px-6 sm:px-20 md:w-[64%] md:px-[14%] lg:px-[16%] 2xl:px-[20%]">
-          <div className="absolute top-2 right-4">
-            <div className="flex flex-row gap-2">
-              <ThemeSwitcher />
-              <LanguageSelector />
-            </div>
-          </div>
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 px-10 py-10">
           {renderAuthContent()}
         </div>
       </div>

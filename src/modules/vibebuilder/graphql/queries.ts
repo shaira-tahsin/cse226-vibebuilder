@@ -11,6 +11,7 @@ export const GET_SITES_QUERY = `
         CreatedDate
         LastUpdatedDate
         Pages
+        Theme
       }
     }
   }

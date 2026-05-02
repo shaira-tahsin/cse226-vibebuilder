@@ -25,6 +25,7 @@ export interface VibeSite {
   CreatedDate: string;
   LastUpdatedDate: string;
   Pages: string; // JSON stringified VibePage[]
+  Theme?: string;
 }
 
 export interface GetSitesResponse {
@@ -59,6 +60,7 @@ export interface InsertSiteParams {
     Slug: string;
     IsPublished: boolean;
     Pages: string;
+    Theme?: string;
   };
 }
 
@@ -69,5 +71,6 @@ export interface UpdateSiteParams {
     Slug?: string;
     IsPublished?: boolean;
     Pages?: string;
+    Theme?: string;
   };
 }

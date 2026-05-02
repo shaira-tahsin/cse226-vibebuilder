@@ -3,17 +3,14 @@ import { GRANT_TYPES } from '@/constant/auth';
 import { Divider } from '@/components/core';
 import { SsoSignin } from '../signin-sso';
 import { SigninEmail } from '../signin-email';
-import { useTheme } from '@/styles/theme/theme-provider';
-import darklogo from '@/assets/images/construct_logo_dark.svg';
-import lightlogo from '@/assets/images/construct_logo_light.svg';
 import { Link, useLocation } from 'react-router-dom';
 import { useGetLoginOptions, useGetSignupSettings } from '../../hooks/use-auth';
+import { Zap } from 'lucide-react';
 
 export const Signin = () => {
   const { data: loginOption } = useGetLoginOptions();
   const { data: signupSettings } = useGetSignupSettings();
 
-  const { theme } = useTheme();
   const { t } = useTranslation();
   const location = useLocation();
   const ssoError = location.state?.ssoError;
@@ -26,53 +23,40 @@ export const Signin = () => {
 
   const isDivider = passwordGrantAllowed && (socialGrantAllowed || oidcGrantAllowed);
 
-  const isBannerAllowedToVisible = [
-    'localhost',
-    'construct.seliseblocks.com',
-    'stg-construct.seliseblocks.com',
-    'dev-construct.seliseblocks.com',
-  ].some((domain) => window.location.hostname === domain);
   return (
     <div className="flex flex-col gap-6">
-      <div className="w-32 h-14 mb-2">
-        <img src={theme == 'dark' ? lightlogo : darklogo} className="w-full h-full" alt="logo" />
+      {/* VibeBuilder branding */}
+      <div className="flex items-center gap-2.5 mb-2">
+        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow">
+          <Zap className="w-5 h-5 text-white" />
+        </div>
+        <span className="font-bold text-slate-800 text-xl tracking-tight">VibeBuilder</span>
       </div>
+
       <div>
-        <div className="text-2xl font-bold text-high-emphasis">{t('LOG_IN')}</div>
+        <div className="text-2xl font-bold text-slate-800">Welcome back</div>
+        <div className="text-sm text-slate-500 mt-1">Sign in to continue building</div>
         {(signupSettings?.isEmailPasswordSignUpEnabled || signupSettings?.isSSoSignUpEnabled) && (
-          <div className="flex items-center gap-1 mt-1">
-            <span className="text-sm font-normal text-medium-emphasis">
+          <div className="flex items-center gap-1 mt-2">
+            <span className="text-sm text-slate-500">
               {t('DONT_HAVE_ACCOUNT')}
             </span>
             <Link
               to={'/signup'}
-              className="text-sm font-bold text-primary hover:text-primary-600 hover:underline"
+              className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline"
             >
               {t('SIGN_UP')}
             </Link>
           </div>
         )}
       </div>
-      
+
       {ssoError && (
-        <div className="w-full">
-          <div className="rounded-lg bg-error-background border border-error p-4">
-            <p className="text-xs font-normal text-error-high-emphasis">
-              {ssoError}
-            </p>
-          </div>
+        <div className="w-full rounded-lg bg-red-50 border border-red-200 p-4">
+          <p className="text-xs font-normal text-red-700">{ssoError}</p>
         </div>
       )}
 
-      <div className={'w-full ' + (isBannerAllowedToVisible ? 'visible' : 'invisible h-0')}>
-        <div className="rounded-lg bg-success-background border border-success p-4">
-          <p className="text-xs font-normal text-success-high-emphasis">
-            Log in to explore the complete Demo and Documentation. Use the credentials:{' '}
-            <span className="font-semibold">demo.construct@seliseblocks.com</span> with password:{' '}
-            <span className="font-semibold">H%FE*FYi5oTQ!VyT6TkEy</span>
-          </p>
-        </div>
-      </div>
       <div className="w-full flex flex-col gap-6">
         {passwordGrantAllowed && <SigninEmail />}
         {isDivider && <Divider text={t('AUTH_OR')} />}

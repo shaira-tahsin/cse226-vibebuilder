@@ -78,19 +78,32 @@ export const SiteRendererPage = () => {
 
   const siteSlug = site.Slug;
 
+  const theme = (site.Theme ?? 'classic') as string;
+
+  const navStyles: Record<string, { nav: string; siteName: string; active: string; inactive: string; pageBg: string }> = {
+    classic:  { nav: 'border-b bg-white',      siteName: 'text-slate-800',   active: 'bg-blue-600 text-white',     inactive: 'text-slate-600 hover:bg-slate-100',   pageBg: 'bg-white' },
+    spring:   { nav: 'border-b bg-pink-50',    siteName: 'text-pink-800',    active: 'bg-pink-400 text-white',     inactive: 'text-pink-600 hover:bg-pink-100',     pageBg: 'bg-white' },
+    ash:      { nav: 'border-b bg-slate-100',  siteName: 'text-slate-700',   active: 'bg-slate-500 text-white',    inactive: 'text-slate-500 hover:bg-slate-200',   pageBg: 'bg-white' },
+    autumn:   { nav: 'border-b bg-amber-50',   siteName: 'text-amber-900',   active: 'bg-amber-800 text-white',    inactive: 'text-amber-700 hover:bg-amber-100',   pageBg: 'bg-white' },
+    garden:   { nav: 'border-b bg-emerald-50', siteName: 'text-emerald-900', active: 'bg-emerald-600 text-white',  inactive: 'text-emerald-700 hover:bg-emerald-100', pageBg: 'bg-white' },
+    midnight: { nav: 'bg-slate-900',           siteName: 'text-white',       active: 'bg-slate-600 text-white',    inactive: 'text-slate-300 hover:bg-slate-700',   pageBg: 'bg-slate-900' },
+  };
+
+  const navStyle = navStyles[theme] ?? navStyles['classic'];
+
   return (
-    <div className="fixed inset-0 overflow-y-auto bg-background z-50">
+    <div className={`fixed inset-0 overflow-y-auto z-50 ${navStyle.pageBg}`}>
       {pages.length > 1 && (
-        <nav className="border-b bg-card px-6 py-3 flex items-center gap-1">
-          <span className="font-semibold mr-4 text-sm">{site.Name}</span>
+        <nav className={`px-6 py-3 flex items-center gap-1 ${navStyle.nav}`}>
+          <span className={`font-semibold mr-4 text-sm ${navStyle.siteName}`}>{site.Name}</span>
           {pages.map((pg) => (
             <Link
               key={pg.PageId}
               to={`/site/${siteId}/${pg.Slug}`}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 pg.PageId === currentPage.PageId
-                  ? 'bg-primary text-primary-foreground'
-                  : 'hover:bg-muted'
+                  ? navStyle.active
+                  : navStyle.inactive
               }`}
             >
               {pg.Name}
@@ -98,7 +111,7 @@ export const SiteRendererPage = () => {
           ))}
         </nav>
       )}
-      <div>
+      <div style={theme === 'midnight' ? { color: '#f1f5f9' } : {}}>
         {currentPage.Components.length === 0 ? (
           <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
             This page has no content yet.

@@ -25,13 +25,14 @@ export const useCreateSite = () => {
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   return useMutation({
-    mutationFn: (params: { name: string; slug: string }) =>
+    mutationFn: (params: { name: string; slug: string; theme?: string }) =>
       insertSite({
         input: {
           OwnerId: user?.itemId ?? '',
           Name: params.name,
           Slug: params.slug,
           IsPublished: false,
+          Theme: params.theme ?? 'classic',
           Pages: JSON.stringify([
             {
               PageId: crypto.randomUUID(),

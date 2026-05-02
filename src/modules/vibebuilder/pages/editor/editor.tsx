@@ -39,6 +39,7 @@ import {
   ExternalLink,
   Eye,
   ChevronRight,
+  Palette,
 } from 'lucide-react';
 import { useSites, useUpdateSite, useUpdatePages } from '../../hooks/use-sites';
 import { VibeSite, VibePage, VibeComponent } from '../../types/site.types';
@@ -199,6 +200,27 @@ const typeIcon: Record<string, React.ElementType> = {
   heading: Type,
 };
 
+// ─── Theme definitions ───────────────────────────────────────────────────────
+type VibeTheme = 'classic' | 'spring' | 'ash' | 'autumn' | 'garden' | 'midnight';
+
+const THEMES: { id: VibeTheme; label: string; preview: string }[] = [
+  { id: 'classic',  label: 'Classic',  preview: 'bg-blue-600' },
+  { id: 'spring',   label: 'Spring',   preview: 'bg-pink-400' },
+  { id: 'ash',      label: 'Ash',      preview: 'bg-slate-500' },
+  { id: 'autumn',   label: 'Autumn',   preview: 'bg-amber-800' },
+  { id: 'garden',   label: 'Garden',   preview: 'bg-emerald-600' },
+  { id: 'midnight', label: 'Midnight', preview: 'bg-slate-900' },
+];
+
+const THEME_TAB_ACTIVE: Record<string, string> = {
+  classic:  'bg-blue-600 text-white border-blue-600',
+  spring:   'bg-pink-400 text-white border-pink-400',
+  ash:      'bg-slate-500 text-white border-slate-500',
+  autumn:   'bg-amber-800 text-white border-amber-800',
+  garden:   'bg-emerald-600 text-white border-emerald-600',
+  midnight: 'bg-slate-900 text-white border-slate-900',
+};
+
 // ─── Sortable canvas item ─────────────────────────────────────────────────────
 const SortableItem = ({
   component,
@@ -342,6 +364,7 @@ export const EditorPage = () => {
   const [saving, setSaving] = useState(false);
   const [savedRecently, setSavedRecently] = useState(false);
   const [addPageOpen, setAddPageOpen] = useState(false);
+  const [siteTheme, setSiteTheme] = useState<VibeTheme>('classic');
   const [newPageName, setNewPageName] = useState('');
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -357,6 +380,7 @@ export const EditorPage = () => {
     if (found) {
       hasLoaded.current = true;
       setSite(found);
+      setSiteTheme((found.Theme as VibeTheme) ?? 'classic');
       const parsed: VibePage[] = (() => {
         try {
           return JSON.parse(found.Pages || '[]');
@@ -482,6 +506,21 @@ export const EditorPage = () => {
       toast.success(site.IsPublished ? 'Site unpublished' : 'Site published!');
     } catch {
       toast.error('Failed to update publish status');
+    }
+  };
+
+  const handleThemeChange = async (newTheme: VibeTheme) => {
+    if (!siteId) return;
+    setSiteTheme(newTheme);
+    setSite((s) => (s ? { ...s, Theme: newTheme } : s));
+    try {
+      await updateSite.mutateAsync({
+        filter: JSON.stringify({ ItemId: siteId }),
+        input: { Theme: newTheme } as any,
+      });
+      toast.success(`Theme changed to ${newTheme}`);
+    } catch {
+      toast.error('Failed to update theme');
     }
   };
 
@@ -680,7 +719,7 @@ export const EditorPage = () => {
                   }}
                   className={`px-3.5 py-1.5 text-xs font-medium rounded-t-md transition-all ${
                     pg.PageId === currentPageId
-                      ? 'bg-[#f0f4f8] border border-b-[#f0f4f8] text-slate-800 shadow-sm'
+                      ? (THEME_TAB_ACTIVE[siteTheme] ?? THEME_TAB_ACTIVE['classic'])
                       : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
                   }`}
                 >
@@ -707,7 +746,7 @@ export const EditorPage = () => {
 
           {/* Drop canvas */}
           <div
-            className="flex-1 overflow-y-auto"
+            className={`flex-1 overflow-y-auto ${siteTheme === 'midnight' ? 'bg-slate-900' : ''}`}
             onClick={() => { setSelectedComponentId(null); setSelectedNested(null); setSelectedColumn(null); }}
           >
             <DndContext
@@ -720,7 +759,7 @@ export const EditorPage = () => {
                 items={components.map((c) => c.Id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="my-6 space-y-2">
+                <div className="my-6 space-y-2" style={siteTheme === 'midnight' ? { color: '#f1f5f9' } : {}}>
                   {components.length === 0 ? (
                     <EmptyCanvas />
                   ) : (
@@ -779,26 +818,54 @@ export const EditorPage = () => {
                   Properties
                 </p>
               </div>
-              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-                  <LayoutTemplate className="w-5 h-5 text-slate-400" />
+              <div className="flex-1 overflow-y-auto">
+                <div className="flex flex-col items-center justify-center p-6 text-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                    <LayoutTemplate className="w-5 h-5 text-slate-400" />
+                  </div>
+                  <div>
+                    {selectedColumn ? (
+                      <>
+                        <p className="text-xs font-medium text-blue-600">Column selected</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+                          Pick any component from the left sidebar to add it to this column
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs font-medium text-slate-700">No selection</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+                          Click any component on the canvas to edit its properties
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  {selectedColumn ? (
-                    <>
-                      <p className="text-xs font-medium text-blue-600">Column selected</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
-                        Pick any component from the left sidebar to add it to this column
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-xs font-medium text-slate-700">No selection</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
-                        Click any component on the canvas to edit its properties
-                      </p>
-                    </>
-                  )}
+
+                {/* Theme switcher */}
+                <div className="px-3 pb-4 border-t border-slate-100 pt-3">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Palette className="w-3.5 h-3.5 text-slate-400" />
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
+                      Site Theme
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {THEMES.map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => handleThemeChange(t.id)}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border text-left transition-all ${
+                          siteTheme === t.id
+                            ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-400'
+                            : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className={`w-3 h-3 rounded-full shrink-0 ${t.preview}`} />
+                        <span className="text-[11px] font-medium text-slate-700">{t.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
               {/* Page info footer */}
