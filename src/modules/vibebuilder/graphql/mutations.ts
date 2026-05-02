@@ -28,6 +28,16 @@ export const DELETE_SITE_MUTATION = `
   }
 `;
 
+export const DELETE_FORM_SUBMISSION_MUTATION = `
+  mutation DeleteVibeFormSubmission($filter: String!, $input: VibeFormSubmissionDeleteInput!) {
+    deleteVibeFormSubmission(filter: $filter, input: $input) {
+      itemId
+      totalImpactedData
+      acknowledged
+    }
+  }
+`;
+
 export const INSERT_FORM_SUBMISSION_MUTATION = `
   mutation InsertVibeFormSubmission($input: VibeFormSubmissionInsertInput!) {
     insertVibeFormSubmission(input: $input) {

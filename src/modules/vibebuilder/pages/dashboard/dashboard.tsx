@@ -681,7 +681,7 @@ const SiteRow = ({
 
 /* ── Responses Section ── */
 const GET_SUBMISSIONS_QUERY = `
-  query GetVibeFormSubmissions($input: QueryInput) {
+  query GetVibeFormSubmissions($input: DynamicQueryInput) {
     getVibeFormSubmissions(input: $input) {
       items {
         ItemId
@@ -697,10 +697,39 @@ const GET_SUBMISSIONS_QUERY = `
   }
 `;
 
+const DELETE_SUBMISSION_MUTATION = `
+  mutation DeleteVibeFormSubmission($filter: String!, $input: VibeFormSubmissionDeleteInput!) {
+    deleteVibeFormSubmission(filter: $filter, input: $input) {
+      itemId
+      totalImpactedData
+      acknowledged
+    }
+  }
+`;
+
 const ResponsesSection = ({ allSites }: { allSites: VibeSite[] }) => {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSite, setSelectedSite] = useState<string>('all');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDeleteSubmission = async (itemId: string) => {
+    setDeletingId(itemId);
+    try {
+      await graphqlClient.mutate<any>({
+        query: DELETE_SUBMISSION_MUTATION,
+        variables: {
+          filter: JSON.stringify({ ItemId: itemId }),
+          input: { isHardDelete: true },
+        },
+      });
+      setSubmissions((prev) => prev.filter((s) => s.ItemId !== itemId));
+    } catch {
+      // silently fail
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -774,9 +803,21 @@ const ResponsesSection = ({ allSites }: { allSites: VibeSite[] }) => {
                   </div>
                   <p className="text-sm text-slate-600 leading-relaxed">{sub.Message}</p>
                 </div>
-                <p className="text-[10px] text-slate-400 shrink-0 mt-0.5">
-                  {sub.SubmittedAt ? new Date(sub.SubmittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
-                </p>
+                <div className="flex items-start gap-2 shrink-0">
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    {sub.SubmittedAt ? new Date(sub.SubmittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                  </p>
+                  <button
+                    onClick={() => handleDeleteSubmission(sub.ItemId)}
+                    disabled={deletingId === sub.ItemId}
+                    className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                    title="Delete response"
+                  >
+                    {deletingId === sub.ItemId
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <Trash2 className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
               </div>
             </div>
           ))}
