@@ -84,7 +84,7 @@ const defaultProps: Record<string, Record<string, unknown>> = {
   },
   divider: { color: '#e2e8f0', thickness: 1, margin: 16 },
   button: { text: 'Click Me', link: '#', bgColor: '#1e293b', textColor: '#ffffff', size: 'md', align: 'center', rounded: 'md' },
-  'two-column': { leftWidth: 50, gap: 16, padding: 16, bgColor: '#ffffff' },
+  'two-column': { leftWidth: 50, gap: 16, padding: 16, bgColor: 'transparent' },
   spacer: { height: 40 },
   heading: { text: 'Section Title', level: 'h2', color: '#0f172a', textAlign: 'left', fontFamily: 'inherit' },
 };

@@ -1,18 +1,14 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
-import bgAuthLight from '@/assets/images/bg_auth_light.svg';
-import bgAuthDark from '@/assets/images/bg_auth_dark.svg';
 import { useGetLoginOptions } from '@/modules/auth/hooks/use-auth';
 import { useAuthState } from '@/state/client-middleware';
-import { useTheme } from '@/styles/theme/theme-provider';
 import { ExtensionBanner, LanguageSelector, ThemeSwitcher } from '@/components/core';
 
 export const AuthLayout = () => {
   const { isLoading, error: loginOptionsError } = useGetLoginOptions();
   const navigate = useNavigate();
   const { isMounted, isAuthenticated } = useAuthState();
-  const { theme } = useTheme();
 
   useEffect(() => {
     // Don't redirect if we're on the MFA verification page
@@ -22,13 +18,6 @@ export const AuthLayout = () => {
   }, [isAuthenticated, navigate]);
 
   if (!isMounted) return null;
-
-  const getBackgroundImage = () => {
-    if (theme === 'system') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? bgAuthDark : bgAuthLight;
-    }
-    return theme === 'dark' ? bgAuthDark : bgAuthLight;
-  };
 
   const is404Error = (error: any) => {
     return (
