@@ -3,8 +3,10 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './styles/globals.css';
 import { initializeProjectKey } from './lib/utils/project-key';
+import { checkAndClearExpiredSession } from './state/store/auth';
 
 initializeProjectKey();
+checkAndClearExpiredSession();
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 

@@ -15,9 +15,10 @@ import { Captcha, useCaptcha } from '@/components/core';
 import { signupFormDefaultValue, signupFormType, getSignupFormValidationSchema } from './utils';
 import { useSignupByEmail } from '../../hooks/use-auth';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui-kit/checkbox';
+import { Zap } from 'lucide-react';
 
 /**
  * SignupForm Component
@@ -84,16 +85,35 @@ export const SignupForm = () => {
   }, [captchaCode, isValid, resetCaptcha]);
 
   return (
-    <>
+    <div className="flex flex-col gap-6">
+      {/* VibeBuilder branding */}
+      <div className="flex items-center gap-2.5 mb-2">
+        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow">
+          <Zap className="w-5 h-5 text-white" />
+        </div>
+        <span className="font-bold text-slate-800 text-xl tracking-tight">VibeBuilder</span>
+      </div>
+
+      <div>
+        <div className="text-2xl font-bold text-slate-800">Create an account</div>
+        <div className="text-sm text-slate-500 mt-1">Start building your website today</div>
+        <div className="flex items-center gap-1 mt-2">
+          <span className="text-sm text-slate-500">Already have an account?</span>
+          <Link
+            to="/signin"
+            className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+          >
+            Log in
+          </Link>
+        </div>
+      </div>
+
       {alreadyRegisteredMessage !== '' && (
-        <div className="w-full">
-          <div className="rounded-lg bg-error-background border border-error p-4">
-            <p className="text-xs font-normal text-error-high-emphasis">
-              {alreadyRegisteredMessage}
-            </p>
-          </div>
+        <div className="w-full rounded-lg bg-red-50 border border-red-200 p-4">
+          <p className="text-xs font-normal text-red-700">{alreadyRegisteredMessage}</p>
         </div>
       )}
+
       <Form {...form}>
         <form className="flex flex-col gap-4" onSubmit={form.handleSubmit(onSubmitHandler)}>
           <FormField
@@ -101,7 +121,7 @@ export const SignupForm = () => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-high-emphasis font-normal">{t('EMAIL')}</FormLabel>
+                <FormLabel className="text-slate-700 font-medium">{t('EMAIL')}</FormLabel>
                 <FormControl>
                   <Input placeholder={t('ENTER_YOUR_EMAIL')} {...field} />
                 </FormControl>
@@ -110,50 +130,50 @@ export const SignupForm = () => {
             )}
           />
 
-          <div className="flex justify-between items-center">
-            <div className="flex items-start gap-2 mt-5 mb-2">
-              <Checkbox
-                id="terms-checkbox"
-                checked={isTermsAccepted}
-                onCheckedChange={(checked: boolean) => setIsTermsAccepted(checked)}
-                className="mt-1"
-              />
-              <label
-                htmlFor="terms-checkbox"
-                className="text-medium-emphasis font-normal leading-5 cursor-pointer"
+          <div className="flex items-start gap-2 mt-1">
+            <Checkbox
+              id="terms-checkbox"
+              checked={isTermsAccepted}
+              onCheckedChange={(checked: boolean) => setIsTermsAccepted(checked)}
+              className="mt-1 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+            />
+            <label
+              htmlFor="terms-checkbox"
+              className="text-sm text-slate-500 font-normal leading-5 cursor-pointer"
+            >
+              {t('I_AGREE_TO')}{' '}
+              <a
+                href="https://selisegroup.com/software-development-terms/"
+                className="text-blue-600 underline hover:text-blue-700"
               >
-                {t('I_AGREE_TO')}{' '}
-                <span className="text-primary underline hover:text-primary-600">
-                  <a href="https://selisegroup.com/software-development-terms/">
-                    {t('TERM_OF_SERVICE')}
-                  </a>
-                </span>{' '}
-                {t('ACKNOWLEDGE_I_HAVE_READ')}{' '}
-                <span className="text-primary underline hover:text-primary-600">
-                  <a href="https://selisegroup.com/privacy-policy/">{t('PRIVACY_POLICY')}</a>
-                </span>
-              </label>
-            </div>
+                {t('TERM_OF_SERVICE')}
+              </a>{' '}
+              {t('ACKNOWLEDGE_I_HAVE_READ')}{' '}
+              <a
+                href="https://selisegroup.com/privacy-policy/"
+                className="text-blue-600 underline hover:text-blue-700"
+              >
+                {t('PRIVACY_POLICY')}
+              </a>
+            </label>
           </div>
 
           {captchaEnabled && (
-            <div className="my-4">
+            <div className="my-2">
               <Captcha {...captcha} theme="light" size="normal" />
             </div>
           )}
 
-          <div className="flex gap-10 mt-2">
-            <Button
-              className="flex-1 font-extrabold"
-              size="lg"
-              type="submit"
-              disabled={!isTermsAccepted || (captchaEnabled && !captchaCode)}
-            >
-              {t('SIGN_UP')}
-            </Button>
-          </div>
+          <Button
+            className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white mt-2"
+            size="lg"
+            type="submit"
+            disabled={!isTermsAccepted || (captchaEnabled && !captchaCode)}
+          >
+            {t('SIGN_UP')}
+          </Button>
         </form>
       </Form>
-    </>
+    </div>
   );
 };

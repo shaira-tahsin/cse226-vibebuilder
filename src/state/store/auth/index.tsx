@@ -3,6 +3,24 @@ import { persist } from 'zustand/middleware';
 import { AuthState } from './index.type';
 import { decodeJWT } from '@/lib/utils/decode-jwt-utils';
 
+const isTokenExpired = (token: string | null): boolean => {
+  if (!token) return true;
+  try {
+    const decoded = decodeJWT(token);
+    if (!decoded?.exp) return true;
+    return decoded.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+};
+
+export const checkAndClearExpiredSession = () => {
+  const state = useAuthStore.getState();
+  if (state.isAuthenticated && isTokenExpired(state.accessToken)) {
+    useAuthStore.getState().logout();
+  }
+};
+
 const initialState = {
   isAuthenticated: false,
   user: null,

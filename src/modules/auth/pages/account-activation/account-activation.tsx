@@ -5,6 +5,7 @@ import { SetpasswordForm } from '@/modules/auth/components/set-password';
 import { useValidateActivationCodeMutation } from '@/modules/auth/hooks/use-auth';
 import { useAuthState } from '@/state/client-middleware';
 import { useToast } from '@/hooks/use-toast';
+import { Zap } from 'lucide-react';
 
 export const AccountActivationPage = () => {
   const [searchParams] = useSearchParams();
@@ -62,20 +63,22 @@ export const AccountActivationPage = () => {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* VibeBuilder branding */}
+      <div className="flex items-center gap-2.5 mb-2">
+        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow">
+          <Zap className="w-5 h-5 text-white" />
+        </div>
+        <span className="font-bold text-slate-800 text-xl tracking-tight">VibeBuilder</span>
+      </div>
       <div>
-        <div className="text-2xl font-bold text-high-emphasis">{t('COMPLETE_SIGNUP')}</div>
-        {/* <div className="flex gap-1 mt-1">
-          <div className="text-sm font-normal text-medium-emphasis">
-            {t('SECURE_ACCOUNT_STRONG_PASSWORD')}
-          </div>
-        </div> */}
+        <div className="text-2xl font-bold text-slate-800">{t('COMPLETE_SIGNUP')}</div>
         <div className="flex items-center gap-1 mt-4">
-          <span className="text-sm font-normal text-medium-emphasis">
+          <span className="text-sm font-normal text-slate-500">
             {t('ALREADY_HAVE_ACCOUNT')}
           </span>
           <Link
             to={'/login'}
-            className="text-sm font-bold text-primary hover:text-primary-600 hover:underline"
+            className="text-sm font-bold text-blue-600 hover:text-blue-700 hover:underline"
           >
             {t('LOG_IN')}
           </Link>
