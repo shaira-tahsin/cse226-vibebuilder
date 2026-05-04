@@ -12,3 +12,6 @@ export const publicRoutes = [
   '/sso/:provider/callback',
   '/oidc',
 ];
+
+// Dynamic public route prefixes — any path starting with these is public
+export const publicRoutePrefixes = ['/site/'];

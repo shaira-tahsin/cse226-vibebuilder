@@ -45,8 +45,8 @@ export const AppRoutes = () => {
             <Routes>
               {AuthRoutes}
 
-              
-              <Route path="/site/:siteId/:pageSlug" element={<Guard><SiteRendererPage /></Guard>} />
+              {/* PUBLIC — no Guard, anyone can view a published site */}
+              <Route path="/site/:siteId/:pageSlug" element={<SiteRendererPage />} />
 
               {/* Vibe routes - Guard but no MainLayout sidebar */}
               <Route

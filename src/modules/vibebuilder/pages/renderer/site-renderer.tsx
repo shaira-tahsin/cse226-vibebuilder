@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { graphqlClient } from '@/lib/graphql-client';
 import { GET_SITES_QUERY } from '../../graphql/queries';
-import { GetSitesResponse, VibeSite, VibePage } from '../../types/site.types';
+import { VibeSite, VibePage } from '../../types/site.types';
 import { renderComponent } from '../../components/vibe-components/vibe-components';
+
+const GRAPHQL_ENDPOINT = 'https://api.seliseblocks.com/uds/v1/pbxspt/gateway';
+const BLOCKS_KEY = 'Pf2985c7687064e6abb59243ef01840e6';
 
 export const SiteRendererPage = () => {
   const { siteId, pageSlug } = useParams<{ siteId: string; pageSlug: string }>();
@@ -16,21 +18,33 @@ export const SiteRendererPage = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await graphqlClient.query<GetSitesResponse>({
-          query: GET_SITES_QUERY,
-          variables: {
-            input: {
-              pageNo: 1,
-              pageSize: 1,
-              filter: JSON.stringify({ ItemId: siteId }),
-            },
+        const res = await fetch(GRAPHQL_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-blocks-key': BLOCKS_KEY,
+            // No Authorization header — this route is public
           },
+          body: JSON.stringify({
+            query: GET_SITES_QUERY,
+            variables: {
+              input: {
+                pageNo: 1,
+                pageSize: 1,
+                filter: JSON.stringify({ ItemId: siteId }),
+              },
+            },
+          }),
         });
-        const found = res?.getVibeSites?.items?.[0];
+
+        const json = await res.json();
+        const found = json?.data?.getVibeSites?.items?.[0];
+
         if (!found || !found.IsPublished) {
           setNotFound(true);
           return;
         }
+
         setSite(found);
         const parsed: VibePage[] = (() => {
           try {
